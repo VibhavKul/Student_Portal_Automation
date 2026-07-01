@@ -53,7 +53,7 @@ public final class ConfigReader {
         } catch (IOException ignored) {
             // fall through to default below
         }
-        return bootstrapProps.getProperty("project.folder", "./test-output");
+        return resolve("project.folder", bootstrapProps.getProperty("project.folder", "./test-output"));
     }
 
     public String getAppUrl() {
@@ -65,19 +65,19 @@ public final class ConfigReader {
     }
 
     public String getBrowser() {
-        return properties.getProperty("browser", "chrome");
+        return resolve("browser", properties.getProperty("browser", "chrome"));
     }
 
     public boolean isHeadless() {
-        return Boolean.parseBoolean(properties.getProperty("headless", "false"));
+        return Boolean.parseBoolean(resolve("headless", properties.getProperty("headless", "false")));
     }
 
     public int getImplicitWait() {
-        return Integer.parseInt(properties.getProperty("implicit.wait", "10"));
+        return Integer.parseInt(resolve("implicit.wait", properties.getProperty("implicit.wait", "10")));
     }
 
     public int getExplicitWait() {
-        return Integer.parseInt(properties.getProperty("explicit.wait", "20"));
+        return Integer.parseInt(resolve("explicit.wait", properties.getProperty("explicit.wait", "20")));
     }
 
     public String get(String key) {
@@ -85,10 +85,29 @@ public final class ConfigReader {
     }
 
     private String getRequired(String key) {
-        String value = properties.getProperty(key);
+        String value = resolve(key, properties.getProperty(key));
         if (value == null || value.trim().isEmpty()) {
             throw new IllegalStateException("Missing required config property: " + key);
         }
         return value;
+    }
+
+    /**
+     * Resolves a config value with CI-friendly precedence: JVM system property
+     * (e.g. -Dapp.url=...) > environment variable (e.g. APP_URL) > config.properties.
+     * Lets a CI pipeline inject per-environment values without editing tracked files.
+     */
+    private static String resolve(String key, String fileValue) {
+        String systemPropertyValue = System.getProperty(key);
+        if (systemPropertyValue != null && !systemPropertyValue.trim().isEmpty()) {
+            return systemPropertyValue;
+        }
+
+        String envVarValue = System.getenv(key.toUpperCase().replace('.', '_'));
+        if (envVarValue != null && !envVarValue.trim().isEmpty()) {
+            return envVarValue;
+        }
+
+        return fileValue;
     }
 }
