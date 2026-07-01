@@ -19,6 +19,8 @@ import utils.DriverManager;
 import utils.ExtentReportManager;
 import utils.ScreenshotUtil;
 
+import java.nio.file.Paths;
+
 /**
  * Custom Cucumber plugin that drives ExtentReports directly from Gherkin
  * lifecycle events - one Extent test per Scenario, one log entry per Step,
@@ -88,11 +90,20 @@ public class ExtentReportListener implements ConcurrentEventListener {
         }
     }
 
+    /**
+     * Captures a screenshot and references it from the report via a path relative
+     * to the report file (../screenshots/<file>), not an absolute filesystem path.
+     * Reports and screenshots are sibling folders under project.folder, but an
+     * absolute path only resolves on the machine that generated it - it breaks
+     * as soon as the report is opened elsewhere (e.g. a downloaded CI artifact).
+     */
     private Media captureStepScreenshot(String stepName) {
         try {
-            String path = ScreenshotUtil.capture(DriverManager.getDriver(), stepName);
-            if (path != null) {
-                return MediaEntityBuilder.createScreenCaptureFromPath(path).build();
+            String absolutePath = ScreenshotUtil.capture(DriverManager.getDriver(), stepName);
+            if (absolutePath != null) {
+                String fileName = Paths.get(absolutePath).getFileName().toString();
+                String relativePath = "../screenshots/" + fileName;
+                return MediaEntityBuilder.createScreenCaptureFromPath(relativePath).build();
             }
         } catch (Exception e) {
             log.warn("Could not capture screenshot for step '{}'", stepName, e);
