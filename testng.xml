@@ -1,0 +1,8 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="StudentPortalAutomationSuite" parallel="none" verbose="1">
+    <test name="StudentPortalTests">
+        <classes>
+            <class name="runners.TestNGCucumberRunner"/>
+        </classes>
+    </test>
+</suite>
