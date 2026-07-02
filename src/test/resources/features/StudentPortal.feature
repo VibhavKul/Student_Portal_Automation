@@ -32,7 +32,7 @@ Feature: Student Portal login and student details submission
       | studentId | STU2026042                 |
       | dob       | 2002-11-30                 |
       | email     | digamber@example.com       |
-      | phone     | 912345678056dwwfweef            |
+      | phone     | 9123456780                 |
       | course    | B.Tech Information Technology |
       | year      | 2nd                        |
     Then the user should be navigated to the Details page
