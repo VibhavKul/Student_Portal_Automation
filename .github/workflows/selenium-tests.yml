@@ -1,0 +1,65 @@
+name: Selenium Tests
+
+# Two ways to run this pipeline:
+#
+# 1. repository_dispatch (type: vercel-deployment-succeeded) - fired automatically
+#    by the React app repo's workflow once a new Vercel production deployment goes
+#    live. See README.md for the two options to wire that trigger up, and the
+#    student-portal repo's .github/workflows/trigger-tests.yml for the one in use.
+#
+# 2. workflow_dispatch - manual "Run workflow" button in the Actions tab, for
+#    on-demand runs against whatever app.url is currently configured.
+on:
+  repository_dispatch:
+    types: [vercel-deployment-succeeded]
+  workflow_dispatch:
+    inputs:
+      tags:
+        description: "Cucumber tag expression to run"
+        required: false
+        default: "@positive or @negative"
+
+permissions:
+  contents: read
+  checks: write
+
+jobs:
+  e2e-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout automation repo
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 11 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "11"
+          cache: maven
+
+      - name: Run automation suite (headless)
+        run: >
+          mvn clean test
+          -Dheadless=true
+          -Dcucumber.filter.tags="${{ github.event.inputs.tags || '@positive or @negative' }}"
+
+      - name: Upload Extent Report, Cucumber reports and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: automation-reports
+          path: |
+            test-output/
+            target/cucumber-reports/
+            target/surefire-reports/
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Publish test summary
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: Cucumber/TestNG Results
+          path: "target/surefire-reports/TEST-*.xml"
+          reporter: java-junit
+          fail-on-error: false

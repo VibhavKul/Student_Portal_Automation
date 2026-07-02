@@ -41,6 +41,8 @@ public final class DriverManager {
             log.info("Running Chrome in headless mode");
             options.addArguments("--headless=new");
             options.addArguments("--disable-gpu");
+            options.addArguments("--no-sandbox");
+            options.addArguments("--disable-dev-shm-usage");
             options.addArguments("--window-size=1920,1080");
         }
 

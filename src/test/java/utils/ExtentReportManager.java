@@ -59,8 +59,9 @@ public final class ExtentReportManager {
         extentReports.attachReporter(sparkReporter);
 
         extentReports.setSystemInfo("OS", System.getProperty("os.name") + " " + System.getProperty("os.version"));
-        extentReports.setSystemInfo("Browser", config.getBrowser());
-        extentReports.setSystemInfo("Environment", config.getAppUrl());
+        extentReports.setSystemInfo("Browser", config.getBrowser() + (config.isHeadless() ? " (headless)" : ""));
+        extentReports.setSystemInfo("App URL", config.getAppUrl());
+        extentReports.setSystemInfo("Env", config.get("env"));
         extentReports.setSystemInfo("Java Version", System.getProperty("java.version"));
         extentReports.setSystemInfo("User", System.getProperty("user.name"));
 
