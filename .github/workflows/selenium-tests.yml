@@ -1,36 +1,107 @@
 name: Selenium Tests
 
-# Two ways to run this pipeline:
+# ---------------------------------------------------------------------------
+# SELF-CONTAINED DEPLOYMENT POLLING
+# ---------------------------------------------------------------------------
+# This repo has no dependency on the Student_Portal (React app) repo having
+# any workflow of its own. Instead, this workflow runs on a 5-minute cron,
+# asks the Vercel API "what's the latest READY production deployment of
+# Student_Portal?", and compares that deployment's unique ID against the
+# last one we already tested. If it's unchanged, the run exits immediately
+# without touching Chrome/Maven. If it's new, the suite runs headless
+# against production and the new ID gets recorded for next time.
 #
-# 1. repository_dispatch (type: vercel-deployment-succeeded) - fired automatically
-#    by the React app repo's workflow once a new Vercel production deployment goes
-#    live. See README.md for the two options to wire that trigger up, and the
-#    student-portal repo's .github/workflows/trigger-tests.yml for the one in use.
+# STATE STORAGE CHOICE: a committed file (.github/last-deployment.txt),
+# not actions/cache.
+#   actions/cache is built for reproducible build inputs keyed by a hash of
+#   *inputs* (e.g. a lockfile) - overwriting an existing key on every run is
+#   not really what it's designed for (cache entries are immutable once
+#   saved; updating one means deleting and recreating it every time), and
+#   cache entries can be evicted after 7 days of no matching restore, which
+#   would silently reset our "already tested" state. A plain file committed
+#   back to the repo has none of that: it's trivial to read/write with
+#   normal shell commands, never expires, and its history is inspectable
+#   via `git log -- .github/last-deployment.txt` if you ever want to see
+#   when each deployment was picked up.
 #
-# 2. workflow_dispatch - manual "Run workflow" button in the Actions tab, for
-#    on-demand runs against whatever app.url is currently configured.
+# SECRETS REQUIRED (this repo's Settings -> Secrets and variables ->
+# Actions -> New repository secret) - see README.md for step-by-step
+# instructions on finding each value in the Vercel dashboard:
+#   - VERCEL_TOKEN       (required) personal API token
+#   - VERCEL_PROJECT_ID  (required) the Student_Portal project's ID
+#   - VERCEL_TEAM_ID     (optional) only needed if the project lives under
+#                         a Vercel Team, not a personal account
+# ---------------------------------------------------------------------------
+
 on:
-  repository_dispatch:
-    types: [vercel-deployment-succeeded]
-  workflow_dispatch:
-    inputs:
-      tags:
-        description: "Cucumber tag expression to run"
-        required: false
-        default: "@positive or @negative"
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch: {}
 
 permissions:
-  contents: read
-  checks: write
+  contents: write # to commit the updated last-deployment.txt back to this repo
+  checks: write # for dorny/test-reporter
+
+concurrency:
+  group: selenium-tests
+  cancel-in-progress: false
 
 jobs:
-  e2e-tests:
+  check-and-test:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout automation repo
+      - name: Checkout this repo
         uses: actions/checkout@v4
 
+      - name: Check for new Vercel deployment
+        id: check
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_TEAM_ID: ${{ secrets.VERCEL_TEAM_ID }}
+        run: |
+          set -e
+
+          if [ -z "$VERCEL_TOKEN" ] || [ -z "$VERCEL_PROJECT_ID" ]; then
+            echo "::error::VERCEL_TOKEN and/or VERCEL_PROJECT_ID secret is missing. See README.md." >&2
+            exit 1
+          fi
+
+          team_query=""
+          if [ -n "$VERCEL_TEAM_ID" ]; then
+            team_query="&teamId=$VERCEL_TEAM_ID"
+          fi
+
+          response=$(curl -sS -H "Authorization: Bearer $VERCEL_TOKEN" \
+            "https://api.vercel.com/v6/deployments?projectId=$VERCEL_PROJECT_ID&target=production&state=READY&limit=1$team_query")
+
+          latest_id=$(echo "$response" | jq -r '.deployments[0].uid // empty')
+          latest_created=$(echo "$response" | jq -r '.deployments[0].createdAt // empty')
+
+          if [ -z "$latest_id" ]; then
+            echo "::error::No READY production deployment found for this project. Response: $response" >&2
+            exit 1
+          fi
+
+          echo "Latest READY production deployment: $latest_id (created $latest_created)"
+
+          last_known=""
+          if [ -f .github/last-deployment.txt ]; then
+            last_known=$(cat .github/last-deployment.txt)
+          fi
+          echo "Last processed deployment: ${last_known:-<none yet>}"
+
+          if [ "$latest_id" = "$last_known" ]; then
+            echo "No new deployment - skipping test run."
+            echo "new_deployment=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "New deployment detected: $latest_id"
+            echo "new_deployment=true" >> "$GITHUB_OUTPUT"
+            echo "deployment_id=$latest_id" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Set up JDK 11 (Temurin)
+        if: steps.check.outputs.new_deployment == 'true'
         uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -38,13 +109,14 @@ jobs:
           cache: maven
 
       - name: Run automation suite (headless)
+        if: steps.check.outputs.new_deployment == 'true'
         run: >
           mvn clean test
           -Dheadless=true
-          -Dcucumber.filter.tags="${{ github.event.inputs.tags || '@positive or @negative' }}"
+          -Dcucumber.filter.tags="@positive or @negative"
 
       - name: Upload Extent Report, Cucumber reports and screenshots
-        if: always()
+        if: steps.check.outputs.new_deployment == 'true' && always()
         uses: actions/upload-artifact@v4
         with:
           name: automation-reports
@@ -56,10 +128,25 @@ jobs:
           if-no-files-found: warn
 
       - name: Publish test summary
-        if: always()
+        if: steps.check.outputs.new_deployment == 'true' && always()
         uses: dorny/test-reporter@v1
         with:
           name: Cucumber/TestNG Results
           path: "target/surefire-reports/TEST-*.xml"
           reporter: java-junit
           fail-on-error: false
+
+      - name: Record processed deployment ID
+        if: steps.check.outputs.new_deployment == 'true' && always()
+        run: |
+          mkdir -p .github
+          echo "${{ steps.check.outputs.deployment_id }}" > .github/last-deployment.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .github/last-deployment.txt
+          if git diff --cached --quiet; then
+            echo "last-deployment.txt already up to date, nothing to commit."
+          else
+            git commit -m "chore: record processed Vercel deployment ${{ steps.check.outputs.deployment_id }} [skip ci]"
+            git push
+          fi
