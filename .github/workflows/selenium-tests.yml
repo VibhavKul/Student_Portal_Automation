@@ -1,36 +1,32 @@
 name: Selenium Tests
 
 # ---------------------------------------------------------------------------
-# INSTANT TRIGGER (PRIMARY) + POLLING (SAFETY NET)
+# SELF-CONTAINED DEPLOYMENT POLLING
 # ---------------------------------------------------------------------------
-# Primary path: a separate "vercel-webhook-relay" project listens for
-# Vercel's own deployment-succeeded webhook and, on success, fires a
-# `repository_dispatch` event (type: vercel-deployment-succeeded) at this
-# repo with a client_payload of { deployment_id, url }. That gets us from
-# "Vercel finished deploying" to "tests are running" in seconds, with no
-# polling delay. Setting up that relay's webhook and its GitHub PAT happens
-# in the vercel-webhook-relay project, not here - this repo only needs to
-# know how to consume the event it sends.
-#
-# Safety net: a 30-minute cron. If a webhook delivery is ever missed (relay
-# down, GitHub API hiccup, etc.), this catches it within half an hour
-# instead of leaving a deployment untested indefinitely. It's intentionally
-# no longer the primary mechanism - just a backstop - so it now polls the
-# Vercel API directly rather than trusting a payload.
+# This repo has no dependency on the Student_Portal (React app) repo having
+# any workflow of its own. Instead, this workflow runs on a 5-minute cron,
+# asks the Vercel API "what's the latest READY production deployment of
+# Student_Portal?", and compares that deployment's unique ID against the
+# last one we already tested. If it's unchanged, the run exits immediately
+# without touching Chrome/Maven. If it's new, the suite runs headless
+# against production and the new ID gets recorded for next time.
 #
 # STATE STORAGE CHOICE: a committed file (.github/last-deployment.txt),
-# not actions/cache. actions/cache is built for reproducible build inputs
-# keyed by a hash of *inputs*, not small mutable state you overwrite on
-# every run - cache entries are effectively immutable once saved under a
-# key, and unused entries evict after 7 days, which would silently reset
-# "already tested" state. A plain committed file has neither problem, never
-# expires, and its history is inspectable via
-# `git log -- .github/last-deployment.txt`.
+# not actions/cache.
+#   actions/cache is built for reproducible build inputs keyed by a hash of
+#   *inputs* (e.g. a lockfile) - overwriting an existing key on every run is
+#   not really what it's designed for (cache entries are immutable once
+#   saved; updating one means deleting and recreating it every time), and
+#   cache entries can be evicted after 7 days of no matching restore, which
+#   would silently reset our "already tested" state. A plain file committed
+#   back to the repo has none of that: it's trivial to read/write with
+#   normal shell commands, never expires, and its history is inspectable
+#   via `git log -- .github/last-deployment.txt` if you ever want to see
+#   when each deployment was picked up.
 #
 # SECRETS REQUIRED (this repo's Settings -> Secrets and variables ->
 # Actions -> New repository secret) - see README.md for step-by-step
-# instructions on finding each value in the Vercel dashboard. These are
-# only used by the schedule/workflow_dispatch polling path:
+# instructions on finding each value in the Vercel dashboard:
 #   - VERCEL_TOKEN       (required) personal API token
 #   - VERCEL_PROJECT_ID  (required) the Student_Portal project's ID
 #   - VERCEL_TEAM_ID     (optional) only needed if the project lives under
@@ -38,10 +34,8 @@ name: Selenium Tests
 # ---------------------------------------------------------------------------
 
 on:
-  repository_dispatch:
-    types: [vercel-deployment-succeeded]
   schedule:
-    - cron: "*/30 * * * *"
+    - cron: "*/5 * * * *"
   workflow_dispatch: {}
 
 permissions:
@@ -59,84 +53,51 @@ jobs:
       - name: Checkout this repo
         uses: actions/checkout@v4
 
-      - name: Log trigger source
-        run: |
-          echo "Triggered by event: ${{ github.event_name }}"
-          if [ "${{ github.event_name }}" = "repository_dispatch" ]; then
-            echo "  repository_dispatch type: ${{ github.event.action }}"
-            echo "  client_payload.deployment_id: ${{ github.event.client_payload.deployment_id }}"
-            echo "  client_payload.url: ${{ github.event.client_payload.url }}"
-          fi
-
-      - name: Determine whether to run tests
+      - name: Check for new Vercel deployment
         id: check
         env:
-          EVENT_NAME: ${{ github.event_name }}
-          PAYLOAD_DEPLOYMENT_ID: ${{ github.event.client_payload.deployment_id }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
           VERCEL_TEAM_ID: ${{ secrets.VERCEL_TEAM_ID }}
         run: |
           set -e
 
-          if [ "$EVENT_NAME" = "repository_dispatch" ]; then
-            # Instant path: the webhook relay already confirmed this deployment
-            # is READY in production. Trust its payload, no Vercel API call.
-            if [ -z "$PAYLOAD_DEPLOYMENT_ID" ]; then
-              echo "::error::repository_dispatch fired with no client_payload.deployment_id." >&2
-              exit 1
-            fi
-            echo "repository_dispatch payload trusted - deployment $PAYLOAD_DEPLOYMENT_ID, running tests immediately."
-            echo "new_deployment=true" >> "$GITHUB_OUTPUT"
-            echo "deployment_id=$PAYLOAD_DEPLOYMENT_ID" >> "$GITHUB_OUTPUT"
+          if [ -z "$VERCEL_TOKEN" ] || [ -z "$VERCEL_PROJECT_ID" ]; then
+            echo "::error::VERCEL_TOKEN and/or VERCEL_PROJECT_ID secret is missing. See README.md." >&2
+            exit 1
+          fi
 
-          elif [ "$EVENT_NAME" = "workflow_dispatch" ]; then
-            # Manual override: run unconditionally, no dedup check. Don't touch
-            # the tracker file since we have no real deployment ID to record.
-            echo "Manual workflow_dispatch - running tests unconditionally."
-            echo "new_deployment=true" >> "$GITHUB_OUTPUT"
-            echo "deployment_id=" >> "$GITHUB_OUTPUT"
+          team_query=""
+          if [ -n "$VERCEL_TEAM_ID" ]; then
+            team_query="&teamId=$VERCEL_TEAM_ID"
+          fi
 
+          response=$(curl -sS -H "Authorization: Bearer $VERCEL_TOKEN" \
+            "https://api.vercel.com/v6/deployments?projectId=$VERCEL_PROJECT_ID&target=production&state=READY&limit=1$team_query")
+
+          latest_id=$(echo "$response" | jq -r '.deployments[0].uid // empty')
+          latest_created=$(echo "$response" | jq -r '.deployments[0].createdAt // empty')
+
+          if [ -z "$latest_id" ]; then
+            echo "::error::No READY production deployment found for this project. Response: $response" >&2
+            exit 1
+          fi
+
+          echo "Latest READY production deployment: $latest_id (created $latest_created)"
+
+          last_known=""
+          if [ -f .github/last-deployment.txt ]; then
+            last_known=$(cat .github/last-deployment.txt)
+          fi
+          echo "Last processed deployment: ${last_known:-<none yet>}"
+
+          if [ "$latest_id" = "$last_known" ]; then
+            echo "No new deployment - skipping test run."
+            echo "new_deployment=false" >> "$GITHUB_OUTPUT"
           else
-            # Safety-net path (schedule): poll Vercel and compare against the
-            # last deployment we already tested.
-            if [ -z "$VERCEL_TOKEN" ] || [ -z "$VERCEL_PROJECT_ID" ]; then
-              echo "::error::VERCEL_TOKEN and/or VERCEL_PROJECT_ID secret is missing. See README.md." >&2
-              exit 1
-            fi
-
-            team_query=""
-            if [ -n "$VERCEL_TEAM_ID" ]; then
-              team_query="&teamId=$VERCEL_TEAM_ID"
-            fi
-
-            response=$(curl -sS -H "Authorization: Bearer $VERCEL_TOKEN" \
-              "https://api.vercel.com/v6/deployments?projectId=$VERCEL_PROJECT_ID&target=production&state=READY&limit=1$team_query")
-
-            latest_id=$(echo "$response" | jq -r '.deployments[0].uid // empty')
-            latest_created=$(echo "$response" | jq -r '.deployments[0].createdAt // empty')
-
-            if [ -z "$latest_id" ]; then
-              echo "::error::No READY production deployment found for this project. Response: $response" >&2
-              exit 1
-            fi
-
-            echo "[safety-net poll] Latest READY production deployment: $latest_id (created $latest_created)"
-
-            last_known=""
-            if [ -f .github/last-deployment.txt ]; then
-              last_known=$(cat .github/last-deployment.txt)
-            fi
-            echo "[safety-net poll] Last processed deployment: ${last_known:-<none yet>}"
-
-            if [ "$latest_id" = "$last_known" ]; then
-              echo "No new deployment - skipping test run."
-              echo "new_deployment=false" >> "$GITHUB_OUTPUT"
-            else
-              echo "New deployment detected via safety-net poll: $latest_id"
-              echo "new_deployment=true" >> "$GITHUB_OUTPUT"
-              echo "deployment_id=$latest_id" >> "$GITHUB_OUTPUT"
-            fi
+            echo "New deployment detected: $latest_id"
+            echo "new_deployment=true" >> "$GITHUB_OUTPUT"
+            echo "deployment_id=$latest_id" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Set up JDK 11 (Temurin)
@@ -176,9 +137,7 @@ jobs:
           fail-on-error: false
 
       - name: Record processed deployment ID
-        # Only when we actually have a real deployment ID to record - manual
-        # workflow_dispatch runs don't produce one and skip this on purpose.
-        if: steps.check.outputs.new_deployment == 'true' && steps.check.outputs.deployment_id != '' && always()
+        if: steps.check.outputs.new_deployment == 'true' && always()
         run: |
           mkdir -p .github
           echo "${{ steps.check.outputs.deployment_id }}" > .github/last-deployment.txt

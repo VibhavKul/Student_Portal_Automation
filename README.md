@@ -2,37 +2,25 @@
 
 Selenium + Cucumber-JVM + TestNG BDD suite for the [Student Portal](https://github.com/VibhavKul/Student_Portal) React app, with a custom ExtentReports 5 listener, SLF4J/Logback logging, and headless Chrome support.
 
-## CI pipeline: instant webhook trigger, with polling as a safety net only
+## CI pipeline: fully self-contained, no dependency on the app repo
 
-This repo does **not** rely on any workflow in [`Student_Portal`](https://github.com/VibhavKul/Student_Portal) - that repo has no CI/CD files of its own, and nothing here assumes it ever will. There are two ways a test run gets kicked off, one primary and one backup:
+This repo does **not** rely on any workflow in [`Student_Portal`](https://github.com/VibhavKul/Student_Portal) - that repo has no CI/CD files of its own, and nothing here assumes it ever will. Instead, this repo independently polls Vercel for new deployments and decides for itself when to run:
 
-**Primary: instant, via webhook.**
+1. [`.github/workflows/selenium-tests.yml`](.github/workflows/selenium-tests.yml) runs on a cron schedule, every 5 minutes.
+2. Each run asks the Vercel API for the most recent `READY` **production** deployment of the Student_Portal project.
+3. That deployment's unique ID is compared against the last one this repo already tested, tracked in the committed file [`.github/last-deployment.txt`](.github/last-deployment.txt).
+   - **Unchanged?** The run logs "no new deployment" and exits immediately - no Chrome, no Maven, no wasted CI minutes.
+   - **New?** The suite runs headless (`mvn clean test -Dheadless=true`) against the live production URL, reports get published as artifacts, and `.github/last-deployment.txt` is updated and committed back to this repo so the next scheduled run knows this deployment was already handled.
 
-1. Vercel finishes deploying `student-portal` to production and fires its own "Deployment Succeeded" webhook.
-2. A separate small project, **vercel-webhook-relay**, listens for that webhook and - once it confirms the deployment - fires a `repository_dispatch` event (type `vercel-deployment-succeeded`) at this repo, with a payload containing `deployment_id` and `url`.
-3. [`.github/workflows/selenium-tests.yml`](.github/workflows/selenium-tests.yml) wakes up on that event, trusts the payload (the relay already confirmed the deployment is live - no need to ask Vercel again), and runs the suite headless against production immediately. Typically seconds after the deploy finishes, not minutes.
-
-Setting up the webhook itself and its GitHub PAT happens entirely inside the **vercel-webhook-relay** project - there's nothing to configure in this repo for that part.
-
-**Backup: a 30-minute poll, in case a webhook delivery is ever missed.**
-
-If the relay is down, a webhook delivery fails, or anything else breaks the instant path, this repo doesn't just sit there indefinitely blind to new deployments. Every 30 minutes, `selenium-tests.yml` also runs on its own and asks the Vercel API directly for the most recent `READY` **production** deployment, comparing its ID against the last one this repo already tested (tracked in the committed file [`.github/last-deployment.txt`](.github/last-deployment.txt)):
-- **Unchanged?** Logs "no new deployment" and exits immediately - no Chrome, no Maven, no wasted CI minutes.
-- **New?** (meaning the webhook path missed it) Runs the suite headless, just like the instant path would have, and updates the tracker file.
-
-You can also trigger a run on demand at any time, independent of both paths above: GitHub repo -> **Actions** tab -> **Selenium Tests** workflow -> **Run workflow** button. A manual run always executes the suite unconditionally, with no dedup check and no tracker file update (that check exists purely to avoid redundant automated runs, not to second-guess an explicit manual request).
-
-Every run logs which of the three triggers fired it (`repository_dispatch`, `schedule`, or `workflow_dispatch`) right at the start of the job, for easy debugging in the Actions log.
+You can also trigger a run on demand at any time, independent of the schedule: GitHub repo -> **Actions** tab -> **Selenium Tests** workflow -> **Run workflow** button. A manual run always executes the full check-and-test logic (it will still skip the actual test steps if the latest deployment hasn't changed since the last run).
 
 If any scenario fails, the `mvn clean test` step exits non-zero, so the whole workflow run shows a red X in the Actions tab.
 
-### Why a committed file instead of GitHub Actions cache, for the tracker?
+### Why a committed file instead of GitHub Actions cache?
 
 `actions/cache` is designed for reproducible build inputs (e.g. `~/.m2` keyed by a pom.xml hash), not small mutable state you overwrite on every run - cache entries are effectively immutable once saved under a key, and unused entries get evicted after 7 days, which would silently reset "last tested deployment" state. A plain file committed to the repo has neither problem: it's trivial to read/write with shell commands, never expires, and its history is inspectable with `git log -- .github/last-deployment.txt`.
 
 ### Secrets you need to add (this repo's Settings -> Secrets and variables -> Actions -> New repository secret)
-
-These are only used by the 30-minute polling safety net - the instant webhook path doesn't call the Vercel API at all, it just trusts the relay's payload.
 
 | Secret | Required? | What it's for |
 |---|---|---|
@@ -47,8 +35,6 @@ These are only used by the 30-minute polling safety net - the instant webhook pa
 **How to find `VERCEL_TEAM_ID`** (skip this if the project is under your personal account, not a Team): click the account/team switcher in the top-left of the Vercel dashboard -> if it shows a team name rather than your personal username, that project is under a Team -> go to that Team's **Settings** -> **General** -> the **Team ID** field is near the top (looks like `team_xxxxxxxxxxxxxxxxxxxxxxxxxxxx`). If the switcher only ever shows your personal account, there's no Team ID to add - leave that secret unset and the workflow's `teamId` query parameter is simply omitted.
 
 Add each one: repo -> **Settings** -> **Secrets and variables** -> **Actions** -> **New repository secret** -> paste the name and value exactly as above.
-
-There is nothing new to configure in *this* repo for the webhook path itself - the GitHub PAT used to fire `repository_dispatch`, and the Vercel webhook subscription, both live in the vercel-webhook-relay project's own settings, not here.
 
 One more thing worth checking once: the "Record processed deployment ID" step pushes a commit back to `main` using the workflow's own permissions. If this repo ever gets branch protection rules requiring PR review on `main`, that push will start failing - either exempt the `github-actions[bot]` actor from that rule, or switch the workflow to open a PR instead of pushing directly.
 
