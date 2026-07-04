@@ -25,7 +25,7 @@ Feature: Student Portal login and student details submission
 
   @positive
   Scenario: Successful login and student details submission flow with an alternate data set
-    When the user logs in with valid credentials "vibhav.kul" and "password"
+    When the user logs in with valid credentials "vibhav.kull" and "password"
     Then the user should land on the Home page
     When the user fills in the student details form with the following valid data and submits it
       | fullName  | Digamber                   |
