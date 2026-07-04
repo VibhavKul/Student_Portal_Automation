@@ -16,6 +16,10 @@ public class LoginPage extends BasePage {
     private static final Logger log = LoggerFactory.getLogger(LoginPage.class);
 
     private static final By ERROR_TEXT = By.cssSelector(".auth-card .error-text");
+    private static final By FORGOT_PASSWORD_LINK = By.cssSelector(".auth-card button.forgot-password-link");
+    private static final By FORGOT_PASSWORD_MODAL = By.cssSelector(".modal-overlay .modal-dialog");
+    private static final By FORGOT_PASSWORD_MODAL_MESSAGE = By.cssSelector(".modal-dialog .modal-message");
+    private static final By FORGOT_PASSWORD_MODAL_OK_BUTTON = By.cssSelector(".modal-dialog button.btn-primary");
 
     @FindBy(id = "username")
     private WebElement usernameInput;
@@ -58,5 +62,33 @@ public class LoginPage extends BasePage {
 
     public boolean isOnLoginPage() {
         return driver.getCurrentUrl().contains("/login");
+    }
+
+    public void clickForgotPasswordLink() {
+        log.info("Clicking Forgot Password link");
+        waitUtils.waitForClickable(FORGOT_PASSWORD_LINK).click();
+    }
+
+    public boolean isForgotPasswordModalDisplayed() {
+        return waitUtils.isVisible(FORGOT_PASSWORD_MODAL);
+    }
+
+    public String getForgotPasswordModalMessage() {
+        return waitUtils.waitForVisible(FORGOT_PASSWORD_MODAL_MESSAGE).getText();
+    }
+
+    public void closeForgotPasswordModal() {
+        log.info("Closing Forgot Password modal");
+        waitUtils.waitForClickable(FORGOT_PASSWORD_MODAL_OK_BUTTON).click();
+        waitUtils.waitForInvisibility(FORGOT_PASSWORD_MODAL);
+    }
+
+    /**
+     * Immediate DOM check for absence, not a wait-then-timeout - use only after
+     * already confirming closure via waitForInvisibility, otherwise this can
+     * false-negative on an element that simply hasn't closed yet.
+     */
+    public boolean isForgotPasswordModalClosed() {
+        return driver.findElements(FORGOT_PASSWORD_MODAL).isEmpty();
     }
 }

@@ -46,4 +46,26 @@ public class LoginSteps {
     public void the_user_should_remain_on_the_login_page() {
         Assert.assertTrue(loginPage().isOnLoginPage(), "Expected the user to remain on the login page after a failed login");
     }
+
+    @When("the user clicks the Forgot Password link")
+    public void the_user_clicks_the_forgot_password_link() {
+        loginPage().clickForgotPasswordLink();
+    }
+
+    @Then("a popup should be displayed with message {string}")
+    public void a_popup_should_be_displayed_with_message(String expectedMessage) {
+        LoginPage loginPage = loginPage();
+        Assert.assertTrue(loginPage.isForgotPasswordModalDisplayed(), "Expected the Forgot Password popup to be displayed");
+        Assert.assertEquals(loginPage.getForgotPasswordModalMessage(), expectedMessage, "Forgot Password popup message mismatch");
+    }
+
+    @When("the user closes the popup")
+    public void the_user_closes_the_popup() {
+        loginPage().closeForgotPasswordModal();
+    }
+
+    @Then("the popup should no longer be displayed")
+    public void the_popup_should_no_longer_be_displayed() {
+        Assert.assertTrue(loginPage().isForgotPasswordModalClosed(), "Expected the Forgot Password popup to be closed");
+    }
 }

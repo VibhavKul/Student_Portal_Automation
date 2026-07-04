@@ -39,6 +39,14 @@ Feature: Student Portal login and student details submission
     And the welcome header should display "Welcome, Digamber"
     And all submitted details should be correctly displayed on the page
 
+  @positive @forgotPassword
+  Scenario: Forgot Password link shows a not-implemented popup (PBB-786)
+    When the user clicks the Forgot Password link
+    Then a popup should be displayed with message "The functionality is not yet implemented...!"
+    When the user closes the popup
+    Then the popup should no longer be displayed
+    And the user should remain on the login page
+
   @negative
   Scenario: Login failure with invalid credentials
     When the user attempts to log in with invalid credentials "wrong.user" and "wrongpass"

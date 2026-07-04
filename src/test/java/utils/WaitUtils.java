@@ -40,4 +40,8 @@ public final class WaitUtils {
             return false;
         }
     }
+
+    public boolean waitForInvisibility(By locator) {
+        return wait.until(ExpectedConditions.invisibilityOfElementLocated(locator));
+    }
 }
