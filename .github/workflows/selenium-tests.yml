@@ -24,19 +24,37 @@ name: Selenium Tests
 #   via `git log -- .github/last-deployment.txt` if you ever want to see
 #   when each deployment was picked up.
 #
+# MANUAL / UI-TRIGGERED RUNS (workflow_dispatch): unlike the schedule path,
+# these always run the suite unconditionally - no Vercel lookup, no dedup
+# check against last-deployment.txt. A human (or the Student Portal login
+# page's "Run Automation Pack" button, via GitHub's API) asking for a run
+# should get one, not a silent no-op because production hasn't redeployed
+# since the last scheduled poll. The optional run_tag input lets a caller
+# (e.g. that UI button) correlate this specific run back to its own request
+# by giving the run a distinctive name (see run-name below), findable via
+# GitHub's "list workflow runs" API without needing the run ID up front.
+#
 # SECRETS REQUIRED (this repo's Settings -> Secrets and variables ->
 # Actions -> New repository secret) - see README.md for step-by-step
-# instructions on finding each value in the Vercel dashboard:
+# instructions on finding each value in the Vercel dashboard. These are
+# only used by the schedule polling path, not by workflow_dispatch:
 #   - VERCEL_TOKEN       (required) personal API token
 #   - VERCEL_PROJECT_ID  (required) the Student_Portal project's ID
 #   - VERCEL_TEAM_ID     (optional) only needed if the project lives under
 #                         a Vercel Team, not a personal account
 # ---------------------------------------------------------------------------
 
+run-name: "${{ inputs.run_tag && format('UI-triggered: {0}', inputs.run_tag) || github.event_name }}"
+
 on:
   schedule:
     - cron: "*/5 * * * *"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      run_tag:
+        description: "Unique tag to correlate this run with a UI-triggered request"
+        required: false
+        type: string
 
 permissions:
   contents: write # to commit the updated last-deployment.txt back to this repo
@@ -56,11 +74,20 @@ jobs:
       - name: Check for new Vercel deployment
         id: check
         env:
+          EVENT_NAME: ${{ github.event_name }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
           VERCEL_TEAM_ID: ${{ secrets.VERCEL_TEAM_ID }}
         run: |
           set -e
+
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            # Manual/UI-triggered run: always execute the suite, no dedup check.
+            echo "workflow_dispatch - running tests unconditionally (no Vercel lookup)."
+            echo "new_deployment=true" >> "$GITHUB_OUTPUT"
+            echo "deployment_id=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
 
           if [ -z "$VERCEL_TOKEN" ] || [ -z "$VERCEL_PROJECT_ID" ]; then
             echo "::error::VERCEL_TOKEN and/or VERCEL_PROJECT_ID secret is missing. See README.md." >&2
@@ -119,7 +146,7 @@ jobs:
         if: steps.check.outputs.new_deployment == 'true' && always()
         uses: actions/upload-artifact@v4
         with:
-          name: automation-reports
+          name: extent-report
           path: |
             test-output/
             target/cucumber-reports/
@@ -137,7 +164,10 @@ jobs:
           fail-on-error: false
 
       - name: Record processed deployment ID
-        if: steps.check.outputs.new_deployment == 'true' && always()
+        # Only when we have a real Vercel deployment ID to record - manual
+        # workflow_dispatch runs skip the Vercel lookup entirely, so there's
+        # nothing meaningful to write to the tracker file in that case.
+        if: steps.check.outputs.new_deployment == 'true' && steps.check.outputs.deployment_id != '' && always()
         run: |
           mkdir -p .github
           echo "${{ steps.check.outputs.deployment_id }}" > .github/last-deployment.txt

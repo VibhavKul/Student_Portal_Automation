@@ -12,7 +12,11 @@ This repo does **not** rely on any workflow in [`Student_Portal`](https://github
    - **Unchanged?** The run logs "no new deployment" and exits immediately - no Chrome, no Maven, no wasted CI minutes.
    - **New?** The suite runs headless (`mvn clean test -Dheadless=true`) against the live production URL, reports get published as artifacts, and `.github/last-deployment.txt` is updated and committed back to this repo so the next scheduled run knows this deployment was already handled.
 
-You can also trigger a run on demand at any time, independent of the schedule: GitHub repo -> **Actions** tab -> **Selenium Tests** workflow -> **Run workflow** button. A manual run always executes the full check-and-test logic (it will still skip the actual test steps if the latest deployment hasn't changed since the last run).
+You can also trigger a run on demand at any time, independent of the schedule: GitHub repo -> **Actions** tab -> **Selenium Tests** workflow -> **Run workflow** button. Unlike the scheduled path, a manual/API-triggered run (`workflow_dispatch`) always executes the full suite unconditionally - no Vercel lookup, no dedup check against the last tested deployment. A human (or a button) asking for a run should get one.
+
+This workflow can also be triggered on-demand from the Student Portal login page's **"Run Automation Pack"** button, which calls GitHub's API with a unique `run_tag` used to track that specific run's progress from the UI. `run_tag` is an optional `workflow_dispatch` input; when it's set, the run itself is named `UI-triggered: <run_tag>` (via the workflow's `run-name` field) instead of the generic default, so the UI can find and poll that exact run afterward through GitHub's "list workflow runs" API without needing to already know its run ID.
+
+The Extent Report (and the secondary Cucumber/Surefire reports) are always uploaded as a single artifact named exactly `extent-report`, regardless of what triggered the run - that's the name any downstream caller (like the Student Portal's report-download endpoint) should look for via the Actions API.
 
 If any scenario fails, the `mvn clean test` step exits non-zero, so the whole workflow run shows a red X in the Actions tab.
 
@@ -64,7 +68,7 @@ Any property in `config.properties` can be overridden per-run without editing th
 
 **Locally:** `test-output/reports/Extent-Report-<timestamp>.html` (plus `test-output/screenshots/` and `test-output/logs/`), and the secondary Cucumber HTML/JSON reports under `target/cucumber-reports/`.
 
-**From a CI run:** GitHub repo -> **Actions** tab -> the workflow run -> **Artifacts** section at the bottom of the run summary page -> download `automation-reports`. It contains the same `test-output/` (Extent report, screenshots, logs) and `target/cucumber-reports/` / `target/surefire-reports/` as a local run. This is uploaded via `actions/upload-artifact` with `if: always()`, so it's there even when a scenario fails.
+**From a CI run:** GitHub repo -> **Actions** tab -> the workflow run -> **Artifacts** section at the bottom of the run summary page -> download `extent-report`. It contains the same `test-output/` (Extent report, screenshots, logs) and `target/cucumber-reports/` / `target/surefire-reports/` as a local run. This is uploaded via `actions/upload-artifact` with `if: always()`, so it's there even when a scenario fails.
 
 The workflow also publishes a pass/fail summary as a GitHub check (via `dorny/test-reporter`, parsing the JUnit-format XML Surefire writes to `target/surefire-reports/TEST-*.xml`) - visible directly on the workflow run page without needing to open the Extent report.
 
