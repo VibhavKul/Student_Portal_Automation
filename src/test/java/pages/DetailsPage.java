@@ -14,6 +14,8 @@ public class DetailsPage extends BasePage {
 
     private static final Logger log = LoggerFactory.getLogger(DetailsPage.class);
 
+    private static final By FATHER_NAME_DISPLAY = By.cssSelector("[data-testid='father-name-display']");
+
     @FindBy(css = ".details-card h2.section-title")
     private WebElement welcomeHeader;
 
@@ -28,6 +30,12 @@ public class DetailsPage extends BasePage {
     public String getWelcomeHeaderText() {
         waitUtils.waitForVisible(By.cssSelector(".details-card h2.section-title"));
         return welcomeHeader.getText();
+    }
+
+    public String getFatherNameDisplay() {
+        WebElement value = waitUtils.waitForVisible(FATHER_NAME_DISPLAY);
+        log.info("Read Father's Name from Details page: '{}'", value.getText());
+        return value.getText();
     }
 
     /**

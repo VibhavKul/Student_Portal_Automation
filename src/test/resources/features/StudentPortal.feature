@@ -12,13 +12,14 @@ Feature: Student Portal login and student details submission
     When the user logs in with valid credentials "vibhav.kul" and "password"
     Then the user should land on the Home page
     When the user fills in the student details form with the following valid data and submits it
-      | fullName  | Vibhav Kulshrestha         |
-      | studentId | STU2026001                 |
-      | dob       | 2003-05-14                 |
-      | email     | vibhav.kul@example.com     |
-      | phone     | 9876543210                 |
-      | course    | B.Sc Computer Science      |
-      | year      | 3rd                        |
+      | fullName   | Vibhav Kulshrestha         |
+      | fatherName | Anil Kulshrestha           |
+      | studentId  | STU2026001                 |
+      | dob        | 2003-05-14                 |
+      | email      | vibhav.kul@example.com     |
+      | phone      | 9876543210                 |
+      | course     | B.Sc Computer Science      |
+      | year       | 3rd                        |
     Then the user should be navigated to the Details page
     And the welcome header should display "Welcome, Vibhav Kulshrestha"
     And all submitted details should be correctly displayed on the page
@@ -28,13 +29,14 @@ Feature: Student Portal login and student details submission
     When the user logs in with valid credentials "vibhav.kul" and "password"
     Then the user should land on the Home page
     When the user fills in the student details form with the following valid data and submits it
-      | fullName  | Digamber                   |
-      | studentId | STU2026042                 |
-      | dob       | 2002-11-30                 |
-      | email     | digamber@example.com       |
-      | phone     | 9123456780                 |
-      | course    | B.Tech Information Technology |
-      | year      | 2nd                        |
+      | fullName   | Digamber                   |
+      | fatherName | Rakesh Sharma               |
+      | studentId  | STU2026042                 |
+      | dob        | 2002-11-30                 |
+      | email      | digamber@example.com       |
+      | phone      | 9123456780                 |
+      | course     | B.Tech Information Technology |
+      | year       | 2nd                        |
     Then the user should be navigated to the Details page
     And the welcome header should display "Welcome, Digamber"
     And all submitted details should be correctly displayed on the page
