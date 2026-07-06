@@ -7,6 +7,7 @@ package testdata;
 public final class StudentTestData {
 
     private final String fullName;
+    private final String fatherName;
     private final String studentId;
     private final String dob;
     private final String email;
@@ -16,6 +17,7 @@ public final class StudentTestData {
 
     private StudentTestData(Builder builder) {
         this.fullName = builder.fullName;
+        this.fatherName = builder.fatherName;
         this.studentId = builder.studentId;
         this.dob = builder.dob;
         this.email = builder.email;
@@ -26,6 +28,10 @@ public final class StudentTestData {
 
     public String getFullName() {
         return fullName;
+    }
+
+    public String getFatherName() {
+        return fatherName;
     }
 
     public String getStudentId() {
@@ -60,6 +66,7 @@ public final class StudentTestData {
     public static StudentTestData defaultValidStudent() {
         return StudentTestData.builder()
                 .fullName("Vibhav Kulshrestha")
+                .fatherName("Anil Kulshrestha")
                 .studentId("STU2026001")
                 .dob("2003-05-14")
                 .email("vibhav.kul@example.com")
@@ -71,6 +78,7 @@ public final class StudentTestData {
 
     public static final class Builder {
         private String fullName;
+        private String fatherName;
         private String studentId;
         private String dob;
         private String email;
@@ -80,6 +88,11 @@ public final class StudentTestData {
 
         public Builder fullName(String fullName) {
             this.fullName = fullName;
+            return this;
+        }
+
+        public Builder fatherName(String fatherName) {
+            this.fatherName = fatherName;
             return this;
         }
 

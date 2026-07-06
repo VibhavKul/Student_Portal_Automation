@@ -2,6 +2,7 @@ package pages;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
@@ -17,8 +18,14 @@ public class HomePage extends BasePage {
 
     private static final Logger log = LoggerFactory.getLogger(HomePage.class);
 
+    private static final By FATHER_NAME_ERROR = By.xpath(
+            "//*[@data-testid='father-name-input']/following-sibling::p[contains(@class,'error-text')]");
+
     @FindBy(id = "fullName")
     private WebElement fullNameInput;
+
+    @FindBy(css = "[data-testid='father-name-input']")
+    private WebElement fatherNameInput;
 
     @FindBy(id = "studentId")
     private WebElement studentIdInput;
@@ -51,11 +58,47 @@ public class HomePage extends BasePage {
 
     public void fillStudentDetailsForm(StudentTestData data) {
         log.info("Filling student details form for '{}'", data.getFullName());
+        fillFullName(data.getFullName());
+        enterFatherName(data.getFatherName());
+        fillRemainingFields(data);
+    }
+
+    /**
+     * Fills every required field except Father's Name, leaving it blank - used by the
+     * negative scenarios that assert Submit stays disabled/invalid without one.
+     */
+    public void fillRequiredFieldsExceptFatherName(StudentTestData data) {
+        log.info("Filling student details form (excluding Father's Name) for '{}'", data.getFullName());
+        fillFullName(data.getFullName());
+        fillRemainingFields(data);
+    }
+
+    /**
+     * Enters a value into the Father's Name field and tabs out of it so the app's
+     * onBlur validation runs and any inline error becomes visible.
+     */
+    public void enterFatherName(String fatherName) {
+        waitUtils.waitForVisible(By.cssSelector("[data-testid='father-name-input']"));
+        fatherNameInput.clear();
+        fatherNameInput.sendKeys(fatherName);
+        fatherNameInput.sendKeys(Keys.TAB);
+    }
+
+    public boolean isFatherNameErrorDisplayed() {
+        return waitUtils.isVisible(FATHER_NAME_ERROR);
+    }
+
+    public boolean isSubmitButtonEnabled() {
+        return submitButton.isEnabled();
+    }
+
+    private void fillFullName(String fullName) {
         waitUtils.waitForVisible(By.id("fullName"));
-
         fullNameInput.clear();
-        fullNameInput.sendKeys(data.getFullName());
+        fullNameInput.sendKeys(fullName);
+    }
 
+    private void fillRemainingFields(StudentTestData data) {
         studentIdInput.clear();
         studentIdInput.sendKeys(data.getStudentId());
 
