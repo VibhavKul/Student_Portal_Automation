@@ -10,14 +10,15 @@ Feature: Father's Name field on the Student Details form
     When the user logs in with valid credentials "vibhav.kul" and "password"
     Then the user should land on the Home page
     When the user fills in the student details form with the following valid data and submits it
-      | fullName   | Vibhav Kulshrestha     |
-      | fatherName | Anil Kulshrestha       |
-      | studentId  | STU2026101             |
-      | dob        | 2003-05-14             |
-      | email      | vibhav.kul@example.com |
-      | phone      | 9876543210             |
-      | course     | B.Sc Computer Science  |
-      | year       | 3rd                    |
+      | fullName         | Vibhav Kulshrestha     |
+      | fatherName       | Anil Kulshrestha       |
+      | motherMaidenName | Sunita Verma           |
+      | studentId        | STU2026101             |
+      | dob              | 2003-05-14             |
+      | email            | vibhav.kul@example.com |
+      | phone            | 9876543210             |
+      | course           | B.Sc Computer Science  |
+      | year             | 3rd                    |
     Then the user should be navigated to the Details page
     And the Father's Name displayed should be "Anil Kulshrestha"
 
@@ -25,26 +26,28 @@ Feature: Father's Name field on the Student Details form
   Scenario: Form cannot be submitted with empty Father's Name
     Given the user is on the Home page after logging in
     When the user fills in all required fields except Father's Name with valid data
-      | fullName  | Vibhav Kulshrestha     |
-      | studentId | STU2026102             |
-      | dob       | 2003-05-14             |
-      | email     | vibhav.kul@example.com |
-      | phone     | 9876543210             |
-      | course    | B.Sc Computer Science  |
-      | year      | 3rd                    |
+      | fullName         | Vibhav Kulshrestha     |
+      | motherMaidenName | Sunita Verma           |
+      | studentId        | STU2026102             |
+      | dob              | 2003-05-14             |
+      | email            | vibhav.kul@example.com |
+      | phone            | 9876543210             |
+      | course           | B.Sc Computer Science  |
+      | year             | 3rd                    |
     Then the Submit button should remain disabled
 
   @negative @fatherName
   Scenario: Father's Name field rejects invalid characters
     Given the user is on the Home page after logging in
     When the user fills in all required fields except Father's Name with valid data
-      | fullName  | Vibhav Kulshrestha     |
-      | studentId | STU2026103             |
-      | dob       | 2003-05-14             |
-      | email     | vibhav.kul@example.com |
-      | phone     | 9876543210             |
-      | course    | B.Sc Computer Science  |
-      | year      | 3rd                    |
+      | fullName         | Vibhav Kulshrestha     |
+      | motherMaidenName | Sunita Verma           |
+      | studentId        | STU2026103             |
+      | dob              | 2003-05-14             |
+      | email            | vibhav.kul@example.com |
+      | phone            | 9876543210             |
+      | course           | B.Sc Computer Science  |
+      | year             | 3rd                    |
     And the user enters "John123" into the Father's Name field
     Then an inline validation error should be displayed for the Father's Name field
     And the Submit button should remain disabled

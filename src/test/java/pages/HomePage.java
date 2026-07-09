@@ -21,11 +21,17 @@ public class HomePage extends BasePage {
     private static final By FATHER_NAME_ERROR = By.xpath(
             "//*[@data-testid='father-name-input']/following-sibling::p[contains(@class,'error-text')]");
 
+    private static final By MOTHER_MAIDEN_NAME_ERROR = By.xpath(
+            "//*[@data-testid='mother-maiden-name-input']/following-sibling::p[contains(@class,'error-text')]");
+
     @FindBy(id = "fullName")
     private WebElement fullNameInput;
 
     @FindBy(css = "[data-testid='father-name-input']")
     private WebElement fatherNameInput;
+
+    @FindBy(css = "[data-testid='mother-maiden-name-input']")
+    private WebElement motherMaidenNameInput;
 
     @FindBy(id = "studentId")
     private WebElement studentIdInput;
@@ -60,6 +66,7 @@ public class HomePage extends BasePage {
         log.info("Filling student details form for '{}'", data.getFullName());
         fillFullName(data.getFullName());
         enterFatherName(data.getFatherName());
+        enterMotherMaidenName(data.getMotherMaidenName());
         fillRemainingFields(data);
     }
 
@@ -70,6 +77,18 @@ public class HomePage extends BasePage {
     public void fillRequiredFieldsExceptFatherName(StudentTestData data) {
         log.info("Filling student details form (excluding Father's Name) for '{}'", data.getFullName());
         fillFullName(data.getFullName());
+        enterMotherMaidenName(data.getMotherMaidenName());
+        fillRemainingFields(data);
+    }
+
+    /**
+     * Fills every required field except Mother's Maiden Name, leaving it blank - used by the
+     * negative scenarios that assert Submit stays disabled/invalid without one.
+     */
+    public void fillRequiredFieldsExceptMotherMaidenName(StudentTestData data) {
+        log.info("Filling student details form (excluding Mother's Maiden Name) for '{}'", data.getFullName());
+        fillFullName(data.getFullName());
+        enterFatherName(data.getFatherName());
         fillRemainingFields(data);
     }
 
@@ -84,8 +103,23 @@ public class HomePage extends BasePage {
         fatherNameInput.sendKeys(Keys.TAB);
     }
 
+    /**
+     * Enters a value into the Mother's Maiden Name field and tabs out of it so the app's
+     * onBlur validation runs and any inline error becomes visible.
+     */
+    public void enterMotherMaidenName(String motherMaidenName) {
+        waitUtils.waitForVisible(By.cssSelector("[data-testid='mother-maiden-name-input']"));
+        motherMaidenNameInput.clear();
+        motherMaidenNameInput.sendKeys(motherMaidenName);
+        motherMaidenNameInput.sendKeys(Keys.TAB);
+    }
+
     public boolean isFatherNameErrorDisplayed() {
         return waitUtils.isVisible(FATHER_NAME_ERROR);
+    }
+
+    public boolean isMotherMaidenNameErrorDisplayed() {
+        return waitUtils.isVisible(MOTHER_MAIDEN_NAME_ERROR);
     }
 
     public boolean isSubmitButtonEnabled() {

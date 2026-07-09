@@ -27,6 +27,7 @@ public class StudentDetailsSteps {
         StudentTestData studentData = StudentTestData.builder()
                 .fullName(data.get("fullName"))
                 .fatherName(data.get("fatherName"))
+                .motherMaidenName(data.get("motherMaidenName"))
                 .studentId(data.get("studentId"))
                 .dob(data.get("dob"))
                 .email(data.get("email"))
@@ -49,6 +50,7 @@ public class StudentDetailsSteps {
 
         StudentTestData studentData = StudentTestData.builder()
                 .fullName(data.get("fullName"))
+                .motherMaidenName(data.get("motherMaidenName"))
                 .studentId(data.get("studentId"))
                 .dob(data.get("dob"))
                 .email(data.get("email"))
@@ -62,10 +64,36 @@ public class StudentDetailsSteps {
         homePage.fillRequiredFieldsExceptFatherName(studentData);
     }
 
+    @When("the user fills in all required fields except Mother's Maiden Name with valid data")
+    public void the_user_fills_in_all_required_fields_except_mothers_maiden_name(DataTable dataTable) {
+        Map<String, String> data = dataTable.asMap(String.class, String.class);
+
+        StudentTestData studentData = StudentTestData.builder()
+                .fullName(data.get("fullName"))
+                .fatherName(data.get("fatherName"))
+                .studentId(data.get("studentId"))
+                .dob(data.get("dob"))
+                .email(data.get("email"))
+                .phone(data.get("phone"))
+                .course(data.get("course"))
+                .year(data.get("year"))
+                .build();
+
+        WebDriver driver = DriverManager.getDriver();
+        HomePage homePage = new HomePage(driver);
+        homePage.fillRequiredFieldsExceptMotherMaidenName(studentData);
+    }
+
     @When("the user enters {string} into the Father's Name field")
     public void the_user_enters_into_the_fathers_name_field(String fatherName) {
         HomePage homePage = new HomePage(DriverManager.getDriver());
         homePage.enterFatherName(fatherName);
+    }
+
+    @When("the user enters {string} into the Mother's Maiden Name field")
+    public void the_user_enters_into_the_mothers_maiden_name_field(String motherMaidenName) {
+        HomePage homePage = new HomePage(DriverManager.getDriver());
+        homePage.enterMotherMaidenName(motherMaidenName);
     }
 
     @Then("the Submit button should remain disabled")
@@ -80,10 +108,22 @@ public class StudentDetailsSteps {
         Assert.assertTrue(homePage.isFatherNameErrorDisplayed(), "Expected an inline validation error for Father's Name");
     }
 
+    @Then("an inline validation error should be displayed for the Mother's Maiden Name field")
+    public void an_inline_validation_error_should_be_displayed_for_the_mothers_maiden_name_field() {
+        HomePage homePage = new HomePage(DriverManager.getDriver());
+        Assert.assertTrue(homePage.isMotherMaidenNameErrorDisplayed(), "Expected an inline validation error for Mother's Maiden Name");
+    }
+
     @Then("the Father's Name displayed should be {string}")
     public void the_fathers_name_displayed_should_be(String expectedFatherName) {
         DetailsPage detailsPage = new DetailsPage(DriverManager.getDriver());
         Assert.assertEquals(detailsPage.getFatherNameDisplay(), expectedFatherName, "Father's Name display mismatch");
+    }
+
+    @Then("the Mother's Maiden Name displayed should be {string}")
+    public void the_mothers_maiden_name_displayed_should_be(String expectedMotherMaidenName) {
+        DetailsPage detailsPage = new DetailsPage(DriverManager.getDriver());
+        Assert.assertEquals(detailsPage.getMotherMaidenNameDisplay(), expectedMotherMaidenName, "Mother's Maiden Name display mismatch");
     }
 
     @Then("the user should be navigated to the Details page")
@@ -107,6 +147,7 @@ public class StudentDetailsSteps {
 
         Assert.assertEquals(detailsPage.getDetailValue("Full Name"), submitted.getFullName(), "Full Name mismatch");
         Assert.assertEquals(detailsPage.getFatherNameDisplay(), submitted.getFatherName(), "Father's Name mismatch");
+        Assert.assertEquals(detailsPage.getMotherMaidenNameDisplay(), submitted.getMotherMaidenName(), "Mother's Maiden Name mismatch");
         Assert.assertEquals(detailsPage.getDetailValue("Student ID"), submitted.getStudentId(), "Student ID mismatch");
         Assert.assertEquals(detailsPage.getDetailValue("Date of Birth"), submitted.getDob(), "Date of Birth mismatch");
         Assert.assertEquals(detailsPage.getDetailValue("Email"), submitted.getEmail(), "Email mismatch");
