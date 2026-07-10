@@ -78,7 +78,7 @@ public final class StudentTestData {
                 .dob("2003-05-14")
                 .email("vibhav.kul@example.com")
                 .phone("9876543210")
-                .course("B.Sc Computer Science")
+                .course("Computer Science")
                 .year("3rd")
                 .build();
     }

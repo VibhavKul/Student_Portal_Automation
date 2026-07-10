@@ -11,6 +11,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import testdata.StudentTestData;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 /**
  * Page object for the Student Details entry form (/home).
  */
@@ -45,8 +48,8 @@ public class HomePage extends BasePage {
     @FindBy(id = "phone")
     private WebElement phoneInput;
 
-    @FindBy(id = "course")
-    private WebElement courseInput;
+    @FindBy(css = "[data-testid='course-program-select']")
+    private WebElement courseProgramSelect;
 
     @FindBy(id = "year")
     private WebElement yearSelect;
@@ -67,7 +70,9 @@ public class HomePage extends BasePage {
         fillFullName(data.getFullName());
         enterFatherName(data.getFatherName());
         enterMotherMaidenName(data.getMotherMaidenName());
-        fillRemainingFields(data);
+        fillFieldsUpToPhone(data);
+        selectCourseProgram(data.getCourse());
+        fillYear(data.getYear());
     }
 
     /**
@@ -78,7 +83,9 @@ public class HomePage extends BasePage {
         log.info("Filling student details form (excluding Father's Name) for '{}'", data.getFullName());
         fillFullName(data.getFullName());
         enterMotherMaidenName(data.getMotherMaidenName());
-        fillRemainingFields(data);
+        fillFieldsUpToPhone(data);
+        selectCourseProgram(data.getCourse());
+        fillYear(data.getYear());
     }
 
     /**
@@ -89,7 +96,23 @@ public class HomePage extends BasePage {
         log.info("Filling student details form (excluding Mother's Maiden Name) for '{}'", data.getFullName());
         fillFullName(data.getFullName());
         enterFatherName(data.getFatherName());
-        fillRemainingFields(data);
+        fillFieldsUpToPhone(data);
+        selectCourseProgram(data.getCourse());
+        fillYear(data.getYear());
+    }
+
+    /**
+     * Fills every required field except Course/Program, leaving the dropdown on its
+     * disabled placeholder option - used by the negative scenario that asserts Submit
+     * stays disabled without a course selected.
+     */
+    public void fillRequiredFieldsExceptCourseProgram(StudentTestData data) {
+        log.info("Filling student details form (excluding Course/Program) for '{}'", data.getFullName());
+        fillFullName(data.getFullName());
+        enterFatherName(data.getFatherName());
+        enterMotherMaidenName(data.getMotherMaidenName());
+        fillFieldsUpToPhone(data);
+        fillYear(data.getYear());
     }
 
     /**
@@ -126,13 +149,33 @@ public class HomePage extends BasePage {
         return submitButton.isEnabled();
     }
 
+    /**
+     * Selects a Course/Program option by its visible text (e.g. "Business Administration").
+     */
+    public void selectCourseProgram(String courseName) {
+        waitUtils.waitForVisible(By.cssSelector("[data-testid='course-program-select']"));
+        new Select(courseProgramSelect).selectByVisibleText(courseName);
+    }
+
+    /**
+     * Returns the Course/Program dropdown's selectable option labels, excluding the
+     * disabled "-- Select Course/Program --" placeholder.
+     */
+    public List<String> getCourseProgramOptions() {
+        waitUtils.waitForVisible(By.cssSelector("[data-testid='course-program-select']"));
+        return new Select(courseProgramSelect).getOptions().stream()
+                .filter(WebElement::isEnabled)
+                .map(WebElement::getText)
+                .collect(Collectors.toList());
+    }
+
     private void fillFullName(String fullName) {
         waitUtils.waitForVisible(By.id("fullName"));
         fullNameInput.clear();
         fullNameInput.sendKeys(fullName);
     }
 
-    private void fillRemainingFields(StudentTestData data) {
+    private void fillFieldsUpToPhone(StudentTestData data) {
         studentIdInput.clear();
         studentIdInput.sendKeys(data.getStudentId());
 
@@ -143,11 +186,10 @@ public class HomePage extends BasePage {
 
         phoneInput.clear();
         phoneInput.sendKeys(data.getPhone());
+    }
 
-        courseInput.clear();
-        courseInput.sendKeys(data.getCourse());
-
-        new Select(yearSelect).selectByVisibleText(data.getYear());
+    private void fillYear(String year) {
+        new Select(yearSelect).selectByVisibleText(year);
     }
 
     /**

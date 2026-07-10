@@ -11,7 +11,10 @@ import testdata.StudentTestData;
 import utils.DriverManager;
 import utils.ScenarioContext;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Step definitions covering the student details form fill/submit and the
@@ -19,6 +22,8 @@ import java.util.Map;
  * is delegated to HomePage/DetailsPage.
  */
 public class StudentDetailsSteps {
+
+    private List<String> courseProgramOptions;
 
     @When("the user fills in the student details form with the following valid data and submits it")
     public void the_user_fills_in_the_student_details_form_and_submits_it(DataTable dataTable) {
@@ -82,6 +87,45 @@ public class StudentDetailsSteps {
         WebDriver driver = DriverManager.getDriver();
         HomePage homePage = new HomePage(driver);
         homePage.fillRequiredFieldsExceptMotherMaidenName(studentData);
+    }
+
+    @When("the user fills in all required fields except Course\\/Program with valid data")
+    public void the_user_fills_in_all_required_fields_except_course_program(DataTable dataTable) {
+        Map<String, String> data = dataTable.asMap(String.class, String.class);
+
+        StudentTestData studentData = StudentTestData.builder()
+                .fullName(data.get("fullName"))
+                .fatherName(data.get("fatherName"))
+                .motherMaidenName(data.get("motherMaidenName"))
+                .studentId(data.get("studentId"))
+                .dob(data.get("dob"))
+                .email(data.get("email"))
+                .phone(data.get("phone"))
+                .year(data.get("year"))
+                .build();
+
+        WebDriver driver = DriverManager.getDriver();
+        HomePage homePage = new HomePage(driver);
+        homePage.fillRequiredFieldsExceptCourseProgram(studentData);
+    }
+
+    @When("the user opens the Course\\/Program dropdown")
+    public void the_user_opens_the_course_program_dropdown() {
+        HomePage homePage = new HomePage(DriverManager.getDriver());
+        courseProgramOptions = homePage.getCourseProgramOptions();
+    }
+
+    @Then("the Course\\/Program dropdown should contain exactly these options: {string}")
+    public void the_course_program_dropdown_should_contain_exactly_these_options(String expectedOptionsCsv) {
+        List<String> expectedOptions = Arrays.stream(expectedOptionsCsv.split(",\\s*"))
+                .collect(Collectors.toList());
+        Assert.assertEquals(courseProgramOptions, expectedOptions, "Course/Program dropdown options mismatch");
+    }
+
+    @Then("the Details page should display {string} as the Course\\/Program")
+    public void the_details_page_should_display_as_the_course_program(String expectedCourse) {
+        DetailsPage detailsPage = new DetailsPage(DriverManager.getDriver());
+        Assert.assertEquals(detailsPage.getDetailValue("Course / Program"), expectedCourse, "Course/Program display mismatch");
     }
 
     @When("the user enters {string} into the Father's Name field")

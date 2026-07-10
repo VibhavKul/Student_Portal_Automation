@@ -17,7 +17,7 @@ Feature: Father's Name field on the Student Details form
       | dob              | 2003-05-14             |
       | email            | vibhav.kul@example.com |
       | phone            | 9876543210             |
-      | course           | B.Sc Computer Science  |
+      | course           | Computer Science       |
       | year             | 3rd                    |
     Then the user should be navigated to the Details page
     And the Father's Name displayed should be "Anil Kulshrestha"
@@ -32,7 +32,7 @@ Feature: Father's Name field on the Student Details form
       | dob              | 2003-05-14             |
       | email            | vibhav.kul@example.com |
       | phone            | 9876543210             |
-      | course           | B.Sc Computer Science  |
+      | course           | Computer Science       |
       | year             | 3rd                    |
     Then the Submit button should remain disabled
 
@@ -46,7 +46,7 @@ Feature: Father's Name field on the Student Details form
       | dob              | 2003-05-14             |
       | email            | vibhav.kul@example.com |
       | phone            | 9876543210             |
-      | course           | B.Sc Computer Science  |
+      | course           | Computer Science       |
       | year             | 3rd                    |
     And the user enters "John123" into the Father's Name field
     Then an inline validation error should be displayed for the Father's Name field

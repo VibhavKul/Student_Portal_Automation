@@ -19,7 +19,7 @@ Feature: Student Portal login and student details submission
       | dob              | 2003-05-14                 |
       | email            | vibhav.kul@example.com     |
       | phone            | 9876543210                 |
-      | course           | B.Sc Computer Science      |
+      | course           | Computer Science           |
       | year             | 3rd                        |
     Then the user should be navigated to the Details page
     And the welcome header should display "Welcome, Vibhav Kulshrestha"
@@ -37,7 +37,7 @@ Feature: Student Portal login and student details submission
       | dob              | 2002-11-30                 |
       | email            | digamber@example.com       |
       | phone            | 9123456780                 |
-      | course           | B.Tech Information Technology |
+      | course           | Information Technology     |
       | year             | 2nd                        |
     Then the user should be navigated to the Details page
     And the welcome header should display "Welcome, Digamber"
