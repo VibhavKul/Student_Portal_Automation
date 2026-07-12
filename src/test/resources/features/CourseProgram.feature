@@ -5,7 +5,7 @@ Feature: Course/Program dropdown on the Student Details form
   So that only valid course names are recorded on my student profile
 
   @positive @courseProgram
-  Scenario: Selected Course/Program is correctly displayed after submission
+  Scenario: PBB-802 || TS_01 || Selected Course/Program is correctly displayed after submission
     Given the user is on the Student Portal login page
     When the user logs in with valid credentials "vibhav.kul" and "password"
     Then the user should land on the Home page
@@ -25,7 +25,7 @@ Feature: Course/Program dropdown on the Student Details form
     And the Details page should display "Business Administration" as the Course/Program
 
   @negative @courseProgram
-  Scenario: Form cannot be submitted without selecting a Course/Program
+  Scenario: PBB-802 || TS_02 || Form cannot be submitted without selecting a Course/Program
     Given the user is on the Home page after logging in
     When the user fills in all required fields except Course/Program with valid data
       | fullName         | Vibhav Kulshrestha     |
@@ -39,7 +39,7 @@ Feature: Course/Program dropdown on the Student Details form
     Then the Submit button should remain disabled
 
   @positive @courseProgram
-  Scenario: All expected Course/Program options are present in the dropdown
+  Scenario: PBB-802 || TS_03 || All expected Course/Program options are present in the dropdown
     Given the user is on the Home page after logging in
     When the user opens the Course/Program dropdown
     Then the Course/Program dropdown should contain exactly these options: "Computer Science, Information Technology, Electronics & Communication, Mechanical Engineering, Civil Engineering, Business Administration, Commerce, Biotechnology, Mathematics, Physics"

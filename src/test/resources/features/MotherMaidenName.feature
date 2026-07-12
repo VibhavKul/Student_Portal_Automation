@@ -5,7 +5,7 @@ Feature: Mother's Maiden Name field on the Student Details form
   So that my mother's maiden name is accurately recorded on my student profile
 
   @positive @motherMaidenName
-  Scenario: Mother's Maiden Name is correctly displayed after submission
+  Scenario: PBB-801 || TS_01 || Mother's Maiden Name is correctly displayed after submission
     Given the user is on the Student Portal login page
     When the user logs in with valid credentials "vibhav.kul" and "password"
     Then the user should land on the Home page
@@ -25,7 +25,7 @@ Feature: Mother's Maiden Name field on the Student Details form
     And the Mother's Maiden Name displayed should be "Sunita Verma"
 
   @negative @motherMaidenName
-  Scenario: Form cannot be submitted with empty Mother's Maiden Name
+  Scenario: PBB-801 || TS_02 || Form cannot be submitted with empty Mother's Maiden Name
     Given the user is on the Home page after logging in
     When the user fills in all required fields except Mother's Maiden Name with valid data
       | fullName   | Vibhav Kulshrestha     |
@@ -39,7 +39,7 @@ Feature: Mother's Maiden Name field on the Student Details form
     Then the Submit button should remain disabled
 
   @negative @motherMaidenName
-  Scenario: Mother's Maiden Name field rejects invalid characters
+  Scenario: PBB-801 || TS_03 || Mother's Maiden Name field rejects invalid characters
     Given the user is on the Home page after logging in
     When the user fills in all required fields except Mother's Maiden Name with valid data
       | fullName   | Vibhav Kulshrestha     |

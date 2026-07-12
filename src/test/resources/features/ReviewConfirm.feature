@@ -5,7 +5,7 @@ Feature: Review & Confirm page between the Student Details form and the Details 
   So that I can catch and correct mistakes before my details are submitted
 
   @positive @reviewConfirm
-  Scenario: All entered details are displayed correctly on the Review & Confirm page
+  Scenario: PBB-803 || TS_01 || All entered details are displayed correctly on the Review & Confirm page
     Given the user is on the Home page after logging in
     When the user fills in the student details form with the following valid data and clicks Review
       | fullName         | Vibhav Kulshrestha             |
@@ -22,7 +22,7 @@ Feature: Review & Confirm page between the Student Details form and the Details 
     And all entered details should be correctly displayed on the Review & Confirm page
 
   @positive @reviewConfirm
-  Scenario: Edit returns to the pre-filled Home form without finalizing the submission
+  Scenario: PBB-803 || TS_02 || Edit returns to the pre-filled Home form without finalizing the submission
     Given the user is on the Home page after logging in
     When the user fills in the student details form with the following valid data and clicks Review
       | fullName         | Vibhav Kulshrestha             |
@@ -42,7 +42,7 @@ Feature: Review & Confirm page between the Student Details form and the Details 
     Then the user should be redirected back to the Home page
 
   @positive @reviewConfirm
-  Scenario: Confirm & Submit finalizes the details and navigates to the Details page
+  Scenario: PBB-803 || TS_03 || Confirm & Submit finalizes the details and navigates to the Details page
     Given the user is on the Home page after logging in
     When the user fills in the student details form with the following valid data and clicks Review
       | fullName         | Vibhav Kulshrestha             |
@@ -62,7 +62,7 @@ Feature: Review & Confirm page between the Student Details form and the Details 
     And all submitted details should be correctly displayed on the page
 
   @negative @reviewConfirm
-  Scenario: Direct navigation to the Details page without going through Review & Confirm is blocked
+  Scenario: PBB-803 || TS_04 || Direct navigation to the Details page without going through Review & Confirm is blocked
     Given the user is on the Home page after logging in
     When the user navigates directly to the Details page URL
     Then the user should be redirected back to the Home page

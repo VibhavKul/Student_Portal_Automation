@@ -5,7 +5,7 @@ Feature: Father's Name field on the Student Details form
   So that my father's name is accurately recorded on my student profile
 
   @positive @fatherName
-  Scenario: Father's Name is correctly displayed after submission
+  Scenario: PBB-800 || TS_01 || Father's Name is correctly displayed after submission
     Given the user is on the Student Portal login page
     When the user logs in with valid credentials "vibhav.kul" and "password"
     Then the user should land on the Home page
@@ -25,7 +25,7 @@ Feature: Father's Name field on the Student Details form
     And the Father's Name displayed should be "Anil Kulshrestha"
 
   @negative @fatherName
-  Scenario: Form cannot be submitted with empty Father's Name
+  Scenario: PBB-800 || TS_02 || Form cannot be submitted with empty Father's Name
     Given the user is on the Home page after logging in
     When the user fills in all required fields except Father's Name with valid data
       | fullName         | Vibhav Kulshrestha     |
@@ -39,7 +39,7 @@ Feature: Father's Name field on the Student Details form
     Then the Submit button should remain disabled
 
   @negative @fatherName
-  Scenario: Father's Name field rejects invalid characters
+  Scenario: PBB-800 || TS_03 || Father's Name field rejects invalid characters
     Given the user is on the Home page after logging in
     When the user fills in all required fields except Father's Name with valid data
       | fullName         | Vibhav Kulshrestha     |
