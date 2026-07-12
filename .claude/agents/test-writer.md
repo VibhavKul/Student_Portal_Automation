@@ -25,6 +25,10 @@ WHEN GIVEN A TICKET (PBB-XXX, Given/When/Then) PLUS ITS data-testid VALUES:
 
 6. ASSERTIONS: match the existing assertion style already used in this project (check first — TestNG Assert or Hamcrest — stay consistent, don't mix).
 
+   TEST SUMMARY LINE FORMAT: every test summary/report line (Extent Report step logs, console output, or wherever scenario-level summaries are generated) must start with: `<PBB-XXX> || TS_<NN> || <summary text>`
+   Example: `PBB-803 || TS_01 || Review page displays all submitted details correctly`
+   Use the ticket number from the story being tested, and a zero-padded sequential test number (TS_01, TS_02...) per scenario within that ticket. Apply this format consistently to all future scenarios — no need to retrofit existing ones unless asked.
+
 7. VERIFY:
    - Run mvn clean test -Dheadless=false -Dcucumber.filter.tags="@<the-new-tag>" first, confirm new/updated scenarios pass against the live Vercel URL in config.properties
    - Then run the full suite mvn clean test -Dheadless=false to confirm nothing existing broke
