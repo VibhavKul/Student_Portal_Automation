@@ -29,7 +29,9 @@ WHEN GIVEN A TICKET (PBB-XXX, Given/When/Then) PLUS ITS data-testid VALUES:
    - Then run the full suite mvn clean test -Dheadless=false to confirm nothing existing broke
    - Check selenium-tests.yml's cucumber.filter.tags value — if it's an explicit tag list (not something broad like "not @wip"), add the new tag so CI picks up these scenarios
 
-8. REPORT BACK (always end with this):
+8. UPDATE STORY_LOG.md: append a new entry at the bottom (before the "Template for New Entries" section) following the existing template format — ticket ID, date, coverage added, tags, locators used, and status "Passing". Also update the "Total Scenario Count" line.
+
+9. REPORT BACK (always end with this):
    - Summary of scenarios added/updated
    - Total scenario count now
    - Confirmation the commit landed on main
