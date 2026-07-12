@@ -21,6 +21,7 @@ WHEN GIVEN A TICKET (PBB-XXX, Given/When/Then) PLUS ITS data-testid VALUES:
    - Dropdown: (a) positive — selected option displayed correctly after submission, (b) negative — submission blocked with no selection, (c) positive — dropdown contains all expected options (assert exact list)
    - Popup/link: (a) positive — link visible and clickable, (b) positive — popup shows correct message, (c) positive — OK/close button dismisses it
    Tag every scenario with @positive or @negative plus a feature-specific tag (e.g. @fatherName, @courseProgram) — infer a sensible tag name from the ticket.
+   Scenario title format (mandatory): `PBB-XXX || TS_NN || <summary>` — story number, then a per-story test ID (TS numbering restarts at 01 for each story; continue the sequence if adding scenarios to a story that already has some), then the summary. Example: `Scenario: PBB-803 || TS_01 || All entered details are displayed correctly on the Review & Confirm page`.
 
 6. ASSERTIONS: match the existing assertion style already used in this project (check first — TestNG Assert or Hamcrest — stay consistent, don't mix).
 
