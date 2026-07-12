@@ -15,6 +15,7 @@ public final class StudentTestData {
     private final String phone;
     private final String course;
     private final String year;
+    private final String address;
 
     private StudentTestData(Builder builder) {
         this.fullName = builder.fullName;
@@ -26,6 +27,7 @@ public final class StudentTestData {
         this.phone = builder.phone;
         this.course = builder.course;
         this.year = builder.year;
+        this.address = builder.address;
     }
 
     public String getFullName() {
@@ -64,6 +66,11 @@ public final class StudentTestData {
         return year;
     }
 
+    /** Optional field - may be null/empty; the form's Address textarea is not required. */
+    public String getAddress() {
+        return address;
+    }
+
     public static Builder builder() {
         return new Builder();
     }
@@ -80,6 +87,7 @@ public final class StudentTestData {
                 .phone("9876543210")
                 .course("Computer Science")
                 .year("3rd")
+                .address("12 MG Road, Agra, Uttar Pradesh")
                 .build();
     }
 
@@ -93,6 +101,7 @@ public final class StudentTestData {
         private String phone;
         private String course;
         private String year;
+        private String address;
 
         public Builder fullName(String fullName) {
             this.fullName = fullName;
@@ -136,6 +145,11 @@ public final class StudentTestData {
 
         public Builder year(String year) {
             this.year = year;
+            return this;
+        }
+
+        public Builder address(String address) {
+            this.address = address;
             return this;
         }
 

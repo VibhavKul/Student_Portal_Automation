@@ -11,7 +11,7 @@ Feature: Student Portal login and student details submission
   Scenario: Successful login and student details submission flow
     When the user logs in with valid credentials "vibhav.kul" and "password"
     Then the user should land on the Home page
-    When the user fills in the student details form with the following valid data and submits it
+    When the user fills in the student details form with the following valid data and clicks Review
       | fullName         | Vibhav Kulshrestha         |
       | fatherName       | Anil Kulshrestha           |
       | motherMaidenName | Sunita Verma               |
@@ -21,6 +21,8 @@ Feature: Student Portal login and student details submission
       | phone            | 9876543210                 |
       | course           | Computer Science           |
       | year             | 3rd                        |
+    Then the user should be taken to the Review & Confirm page
+    When the user confirms the submission on the Review & Confirm page
     Then the user should be navigated to the Details page
     And the welcome header should display "Welcome, Vibhav Kulshrestha"
     And all submitted details should be correctly displayed on the page
@@ -29,7 +31,7 @@ Feature: Student Portal login and student details submission
   Scenario: Successful login and student details submission flow with an alternate data set
     When the user logs in with valid credentials "vibhav.kul" and "password"
     Then the user should land on the Home page
-    When the user fills in the student details form with the following valid data and submits it
+    When the user fills in the student details form with the following valid data and clicks Review
       | fullName         | Digamber                   |
       | fatherName       | Rakesh Sharma               |
       | motherMaidenName | Kavita Rao                 |
@@ -39,6 +41,8 @@ Feature: Student Portal login and student details submission
       | phone            | 9123456780                 |
       | course           | Information Technology     |
       | year             | 2nd                        |
+    Then the user should be taken to the Review & Confirm page
+    When the user confirms the submission on the Review & Confirm page
     Then the user should be navigated to the Details page
     And the welcome header should display "Welcome, Digamber"
     And all submitted details should be correctly displayed on the page

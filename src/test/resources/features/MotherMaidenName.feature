@@ -9,7 +9,7 @@ Feature: Mother's Maiden Name field on the Student Details form
     Given the user is on the Student Portal login page
     When the user logs in with valid credentials "vibhav.kul" and "password"
     Then the user should land on the Home page
-    When the user fills in the student details form with the following valid data and submits it
+    When the user fills in the student details form with the following valid data and clicks Review
       | fullName         | Vibhav Kulshrestha     |
       | fatherName       | Anil Kulshrestha       |
       | motherMaidenName | Sunita Verma           |
@@ -19,6 +19,8 @@ Feature: Mother's Maiden Name field on the Student Details form
       | phone            | 9876543210             |
       | course           | Computer Science       |
       | year             | 3rd                    |
+    Then the user should be taken to the Review & Confirm page
+    When the user confirms the submission on the Review & Confirm page
     Then the user should be navigated to the Details page
     And the Mother's Maiden Name displayed should be "Sunita Verma"
 

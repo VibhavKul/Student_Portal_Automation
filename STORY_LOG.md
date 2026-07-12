@@ -65,9 +65,31 @@ since a dropdown can't receive free text.
 
 ---
 
+## PBB-803 — Review & Confirm Page
+
+**Date:** 2026-07-13
+**Coverage added:** 4 new scenarios — (1) positive: all entered details displayed correctly
+as read-only label-value pairs on the Review & Confirm page, (2) positive: Edit returns to
+the pre-filled Home form without finalizing (direct /details navigation still blocked after
+Edit), (3) positive: Confirm & Submit finalizes and navigates to the Details page,
+(4) negative: direct navigation to /details without going through Review & Confirm is
+redirected back to Home (route protection). Also updated all 5 existing positive
+submission scenarios (StudentPortal x2, FatherName, MotherMaidenName, CourseProgram) to
+route through the new Home → Review & Confirm → Details flow, and added the optional
+Address field to the test data builder / form fill.
+**Tags:** @positive/@negative @reviewConfirm
+**Locators used:** `review-button`, `review-edit-button`, `review-confirm-button`,
+`full-name-review-display`, `father-name-review-display`, `mother-maiden-name-review-display`,
+`student-id-review-display`, `dob-review-display`, `email-review-display`,
+`phone-review-display`, `course-program-review-display`, `year-review-display`,
+`address-review-display`
+**Status:** ✅ Passing
+
+---
+
 ## Total Scenario Count (as of last entry above)
 
-**Running total:** (fill in — update each time a new entry is added)
+**Running total:** 17 (StudentPortal 4, FatherName 3, MotherMaidenName 3, CourseProgram 3, ReviewConfirm 4)
 
 ---
 

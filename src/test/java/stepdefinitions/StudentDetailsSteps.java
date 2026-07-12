@@ -25,8 +25,8 @@ public class StudentDetailsSteps {
 
     private List<String> courseProgramOptions;
 
-    @When("the user fills in the student details form with the following valid data and submits it")
-    public void the_user_fills_in_the_student_details_form_and_submits_it(DataTable dataTable) {
+    @When("the user fills in the student details form with the following valid data and clicks Review")
+    public void the_user_fills_in_the_student_details_form_and_clicks_review(DataTable dataTable) {
         Map<String, String> data = dataTable.asMap(String.class, String.class);
 
         StudentTestData studentData = StudentTestData.builder()
@@ -39,6 +39,7 @@ public class StudentDetailsSteps {
                 .phone(data.get("phone"))
                 .course(data.get("course"))
                 .year(data.get("year"))
+                .address(data.get("address"))
                 .build();
 
         ScenarioContext.setSubmittedStudentData(studentData);
@@ -198,6 +199,9 @@ public class StudentDetailsSteps {
         Assert.assertEquals(detailsPage.getDetailValue("Phone Number"), submitted.getPhone(), "Phone Number mismatch");
         Assert.assertEquals(detailsPage.getDetailValue("Course / Program"), submitted.getCourse(), "Course mismatch");
         Assert.assertEquals(detailsPage.getDetailValue("Year / Semester"), submitted.getYear(), "Year mismatch");
+        if (submitted.getAddress() != null && !submitted.getAddress().trim().isEmpty()) {
+            Assert.assertEquals(detailsPage.getDetailValue("Address"), submitted.getAddress(), "Address mismatch");
+        }
 
         ScenarioContext.clear();
     }

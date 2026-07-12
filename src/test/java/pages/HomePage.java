@@ -54,8 +54,15 @@ public class HomePage extends BasePage {
     @FindBy(id = "year")
     private WebElement yearSelect;
 
-    @FindBy(css = ".details-form button.btn-primary")
-    private WebElement submitButton;
+    @FindBy(id = "address")
+    private WebElement addressInput;
+
+    /**
+     * The form's primary action button - since PBB-803 it is labelled "Review"
+     * and navigates to the Review &amp; Confirm page instead of submitting directly.
+     */
+    @FindBy(css = "[data-testid='review-button']")
+    private WebElement reviewButton;
 
     public HomePage(WebDriver driver) {
         super(driver);
@@ -73,6 +80,7 @@ public class HomePage extends BasePage {
         fillFieldsUpToPhone(data);
         selectCourseProgram(data.getCourse());
         fillYear(data.getYear());
+        fillAddress(data.getAddress());
     }
 
     /**
@@ -146,7 +154,7 @@ public class HomePage extends BasePage {
     }
 
     public boolean isSubmitButtonEnabled() {
-        return submitButton.isEnabled();
+        return reviewButton.isEnabled();
     }
 
     /**
@@ -192,6 +200,15 @@ public class HomePage extends BasePage {
         new Select(yearSelect).selectByVisibleText(year);
     }
 
+    /** Fills the optional Address textarea; skipped when the data set has no address. */
+    private void fillAddress(String address) {
+        if (address == null || address.trim().isEmpty()) {
+            return;
+        }
+        addressInput.clear();
+        addressInput.sendKeys(address);
+    }
+
     /**
      * Sets a native <input type="date"> value directly via the React-tracked value
      * setter and fires an "input" event, since sendKeys() on a date field is
@@ -207,9 +224,56 @@ public class HomePage extends BasePage {
                 input, isoDate);
     }
 
+    /**
+     * Clicks the form's primary action button (labelled "Review" since PBB-803),
+     * which navigates to the Review &amp; Confirm page.
+     */
     public void submitForm() {
-        log.info("Submitting student details form");
-        waitUtils.waitForClickable(By.cssSelector(".details-form button.btn-primary"));
-        submitButton.click();
+        log.info("Submitting student details form (clicking the Review button)");
+        waitUtils.waitForClickable(By.cssSelector("[data-testid='review-button']"));
+        reviewButton.click();
+    }
+
+    // ---- Pre-filled form value readers (used after Review page "Edit") ----
+
+    public String getFullNameValue() {
+        waitUtils.waitForVisible(By.id("fullName"));
+        return fullNameInput.getAttribute("value");
+    }
+
+    public String getFatherNameValue() {
+        return fatherNameInput.getAttribute("value");
+    }
+
+    public String getMotherMaidenNameValue() {
+        return motherMaidenNameInput.getAttribute("value");
+    }
+
+    public String getStudentIdValue() {
+        return studentIdInput.getAttribute("value");
+    }
+
+    public String getDobValue() {
+        return dobInput.getAttribute("value");
+    }
+
+    public String getEmailValue() {
+        return emailInput.getAttribute("value");
+    }
+
+    public String getPhoneValue() {
+        return phoneInput.getAttribute("value");
+    }
+
+    public String getSelectedCourseProgram() {
+        return new Select(courseProgramSelect).getFirstSelectedOption().getText();
+    }
+
+    public String getSelectedYear() {
+        return new Select(yearSelect).getFirstSelectedOption().getText();
+    }
+
+    public String getAddressValue() {
+        return addressInput.getAttribute("value");
     }
 }
