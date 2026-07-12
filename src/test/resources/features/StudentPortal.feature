@@ -60,3 +60,7 @@ Feature: Student Portal login and student details submission
     When the user attempts to log in with invalid credentials "wrong.user" and "wrongpass"
     Then an inline error message "Invalid username or password" should be displayed
     And the user should remain on the login page
+
+  @positive @loginTitle
+  Scenario: PBB-999 || TS_01 || Login page displays the "Student Portal" title
+    Then the login page title should display "Student Portal"

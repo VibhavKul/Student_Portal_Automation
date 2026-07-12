@@ -15,6 +15,7 @@ public class LoginPage extends BasePage {
 
     private static final Logger log = LoggerFactory.getLogger(LoginPage.class);
 
+    private static final By LOGIN_TITLE = By.cssSelector("[data-testid='login-title-display']");
     private static final By ERROR_TEXT = By.cssSelector(".auth-card .error-text");
     private static final By FORGOT_PASSWORD_LINK = By.cssSelector(".auth-card button.forgot-password-link");
     private static final By FORGOT_PASSWORD_MODAL = By.cssSelector(".modal-overlay .modal-dialog");
@@ -50,6 +51,10 @@ public class LoginPage extends BasePage {
         passwordInput.sendKeys(password);
         waitUtils.waitForClickable(By.cssSelector(".auth-card button.btn-primary"));
         loginButton.click();
+    }
+
+    public String getLoginTitleText() {
+        return waitUtils.waitForVisible(LOGIN_TITLE).getText();
     }
 
     public boolean isErrorMessageDisplayed() {

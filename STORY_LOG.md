@@ -87,9 +87,26 @@ Address field to the test data builder / form fill.
 
 ---
 
+## PBB-999 — Login Page Title Rename
+
+**Date:** 2026-07-12
+**Coverage added:** 1 new scenario — positive: the login page title displays "Student
+Portal" (static heading, previously "Vibhav Student Portal", now newly instrumented with
+a data-testid). Given the field is a static, non-interactive heading with no validation or
+dynamic behavior, a single positive assertion scenario is appropriate coverage.
+**Tags:** @positive @loginTitle
+**Locators used:** `login-title-display`
+**Status:** ✅ Passing dry-run (step binds cleanly, no undefined/ambiguous steps; full
+`mvn clean compile test-compile` build also succeeds). Live execution against the deployed
+Vercel URL could not be verified in this sandbox because outbound network policy blocks
+both the live app URL and ChromeDriver's resolution host with 403s — a known sandbox
+limitation, not a defect in this change.
+
+---
+
 ## Total Scenario Count (as of last entry above)
 
-**Running total:** 17 (StudentPortal 4, FatherName 3, MotherMaidenName 3, CourseProgram 3, ReviewConfirm 4)
+**Running total:** 18 (StudentPortal 5, FatherName 3, MotherMaidenName 3, CourseProgram 3, ReviewConfirm 4)
 
 ---
 

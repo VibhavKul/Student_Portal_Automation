@@ -68,4 +68,9 @@ public class LoginSteps {
     public void the_popup_should_no_longer_be_displayed() {
         Assert.assertTrue(loginPage().isForgotPasswordModalClosed(), "Expected the Forgot Password popup to be closed");
     }
+
+    @Then("the login page title should display {string}")
+    public void the_login_page_title_should_display(String expectedTitle) {
+        Assert.assertEquals(loginPage().getLoginTitleText(), expectedTitle, "Login page title text mismatch");
+    }
 }
